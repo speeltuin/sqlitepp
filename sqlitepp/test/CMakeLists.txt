@@ -15,3 +15,11 @@ gtest_discover_tests(sqlite3_error_test)
 add_executable(sqlitepp_error_test sqlitepp_error_test.cpp)
 target_link_libraries(sqlitepp_error_test PRIVATE SQLitepp::sqlitepp GTest::gmock_main)
 gtest_discover_tests(sqlitepp_error_test)
+
+add_executable(connection_unit_test connection_unit_test.cpp)
+target_link_libraries(connection_unit_test PRIVATE SQLitepp::sqlitepp_ext GTest::gmock_main)
+gtest_discover_tests(connection_unit_test)
+
+add_executable(connection_system_test connection_system_test.cpp)
+target_link_libraries(connection_system_test PRIVATE SQLitepp::sqlitepp GTest::gmock_main)
+gtest_discover_tests(connection_system_test)
