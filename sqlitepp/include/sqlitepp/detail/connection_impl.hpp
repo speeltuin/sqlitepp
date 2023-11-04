@@ -104,37 +104,37 @@ public:
         do_close(ec);
     }
 
-    void impl_construct(filename_adapter filename, std::error_code& ec) noexcept
+    void construct(filename_adapter filename, std::error_code& ec) noexcept
     {
         do_construct(filename, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr, ec);
     }
 
-    void impl_construct(filename_adapter filename, flags_adapter flags, std::error_code& ec) noexcept
+    void construct(filename_adapter filename, flags_adapter flags, std::error_code& ec) noexcept
     {
         do_construct(filename, flags, nullptr, ec);
     }
 
-    void impl_construct(filename_adapter filename, flags_adapter flags, vfsname_adapter vfsname, std::error_code& ec) noexcept
+    void construct(filename_adapter filename, flags_adapter flags, vfsname_adapter vfsname, std::error_code& ec) noexcept
     {
         do_construct(filename, flags, vfsname, ec);
     }
 
-    bool impl_open(filename_adapter filename, std::error_code& ec) noexcept
+    bool open(filename_adapter filename, std::error_code& ec) noexcept
     {
         return do_open(filename, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr, ec);
     }
 
-    bool impl_open(filename_adapter filename, flags_adapter flags, std::error_code& ec) noexcept
+    bool open(filename_adapter filename, flags_adapter flags, std::error_code& ec) noexcept
     {
         return do_open(filename, flags, nullptr, ec);
     }
 
-    bool impl_open(filename_adapter filename, flags_adapter flags, vfsname_adapter vfsname, std::error_code& ec) noexcept
+    bool open(filename_adapter filename, flags_adapter flags, vfsname_adapter vfsname, std::error_code& ec) noexcept
     {
         return do_open(filename, flags, vfsname, ec);
     }
 
-    void impl_close(std::error_code& ec) noexcept
+    void close(std::error_code& ec) noexcept
     {
         do_close(ec);
     }

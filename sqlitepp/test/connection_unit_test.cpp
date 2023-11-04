@@ -298,7 +298,7 @@ TEST_F(ConnectionUnitTest, MoveAssignmentSelf)
     EXPECT_TRUE(conn.is_open());
 }
 
-TEST_F(ConnectionUnitTest, Reopen)
+TEST_F(ConnectionUnitTest, OpenAlreadyOpenConnection)
 {
     sqlite3 db = {1};
 

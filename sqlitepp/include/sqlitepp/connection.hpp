@@ -35,14 +35,14 @@ public:
     template<typename... Args, std::enable_if_t<std::disjunction_v<std::is_same<Args, std::error_code&>...>, bool> = true>
     explicit connection(Args&&... args) noexcept
     {
-        impl_construct(std::forward<Args>(args)...);
+        Impl::construct(std::forward<Args>(args)...);
     }
 
     template<typename... Args, std::enable_if_t<std::negation_v<std::disjunction<std::is_same<Args, std::error_code&>...>>, bool> = true>
     explicit connection(Args&&... args)
     {
         std::error_code ec;
-        impl_construct(std::forward<Args>(args)..., ec);
+        Impl::construct(std::forward<Args>(args)..., ec);
         throw_on_error(ec);
     }
 
@@ -58,7 +58,7 @@ public:
     {
         if (this != &other) {
             std::error_code ec;
-            impl_close(ec);
+            Impl::close(ec);
             throw_on_error(ec);
             std::swap<Impl>(*this, other);
         }
@@ -68,27 +68,27 @@ public:
     template<typename... Args, std::enable_if_t<std::disjunction_v<std::is_same<Args, std::error_code&>...>, bool> = true>
     bool open(Args&&... args) noexcept
     {
-        return impl_open(std::forward<Args>(args)...);
+        return Impl::open(std::forward<Args>(args)...);
     }
 
     template<typename... Args, std::enable_if_t<std::negation_v<std::disjunction<std::is_same<Args, std::error_code&>...>>, bool> = true>
     bool open(Args&&... args)
     {
         std::error_code ec;
-        bool opened = impl_open(std::forward<Args>(args)..., ec);
+        bool opened = Impl::open(std::forward<Args>(args)..., ec);
         throw_on_error(ec);
         return opened;
     }
 
     void close(std::error_code& ec) noexcept
     {
-        impl_close(ec);
+        Impl::close(ec);
     }
 
     void close()
     {
         std::error_code ec;
-        impl_close(ec);
+        Impl::close(ec);
         throw_on_error(ec);
     }
 

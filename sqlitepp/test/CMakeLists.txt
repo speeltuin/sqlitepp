@@ -23,3 +23,7 @@ gtest_discover_tests(connection_unit_test)
 add_executable(connection_system_test connection_system_test.cpp)
 target_link_libraries(connection_system_test PRIVATE SQLitepp::sqlitepp GTest::gmock_main)
 gtest_discover_tests(connection_system_test)
+
+add_executable(statement_unit_test statement_unit_test.cpp)
+target_link_libraries(statement_unit_test PRIVATE SQLitepp::sqlitepp_ext GTest::gmock_main)
+gtest_discover_tests(statement_unit_test)
