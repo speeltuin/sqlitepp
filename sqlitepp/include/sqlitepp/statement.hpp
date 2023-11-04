@@ -38,9 +38,9 @@ public:
 
     statement(statement&& other) noexcept
     {
+        statement temp{other.impl_.conn_handle()};
+        std::swap(impl_, temp.impl_);
         std::swap(impl_, other.impl_);
-        statement temp{impl_.conn_handle()};
-        std::swap(other.impl_, temp.impl_);
     }
 
     statement& operator=(statement&& other)
@@ -49,9 +49,9 @@ public:
             std::error_code ec;
             impl_.finalize(ec);
             throw_on_error(ec);
+            statement temp{other.impl_.conn_handle()};
+            std::swap(impl_, temp.impl_);
             std::swap(impl_, other.impl_);
-            statement temp{impl_.conn_handle()};
-            std::swap(other.impl_, temp.impl_);
         }
         return *this;
     }
