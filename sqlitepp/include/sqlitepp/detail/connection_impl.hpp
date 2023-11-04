@@ -3,19 +3,99 @@
 #ifndef SQLITEPP_DETAIL_CONNECTION_IMPL_HPP
 #define SQLITEPP_DETAIL_CONNECTION_IMPL_HPP
 
-#include <sqlitepp/detail/converter.hpp>
 #include <sqlitepp/detail/sqlite3.hpp>
 #include <sqlitepp/sqlite3_error.hpp>
 #include <sqlitepp/types.hpp>
 
+#include <filesystem>
 #include <type_traits>
 
 namespace sqlitepp::detail
 {
 
-class connection_impl : private string_converter
+template<typename Connection>
+class connection_impl
 {
 public:
+    class filename_adapter
+    {
+    public:
+        filename_adapter() = delete;
+
+        filename_adapter(const char* filename) noexcept : filename_(filename)
+        {
+        }
+
+        filename_adapter(const std::string& filename) noexcept : filename_(filename.c_str())
+        {
+        }
+
+        template<std::enable_if_t<std::is_same_v<std::filesystem::path::value_type, char>, bool> = true>
+        filename_adapter(const std::filesystem::path& filename) noexcept : filename_(filename.c_str())
+        {
+        }
+
+        filename_adapter(std::nullptr_t) = delete;
+
+        operator const char*() const noexcept
+        {
+            return filename_;
+        }
+
+    private:
+        const char* filename_;
+    };
+
+    class flags_adapter
+    {
+    public:
+        flags_adapter() = delete;
+
+        flags_adapter(int flags) noexcept : flags_(flags)
+        {
+        }
+
+        flags_adapter(typename Connection::openmode flags) noexcept : flags_(static_cast<int>(flags))
+        {
+        }
+
+        operator int() const noexcept
+        {
+            return flags_;
+        }
+
+    private:
+        int flags_;
+    };
+
+    class vfsname_adapter
+    {
+    public:
+        vfsname_adapter() = delete;
+
+        vfsname_adapter(const char* vfsname) noexcept : vfsname_(vfsname)
+        {
+        }
+
+        vfsname_adapter(const std::string& vfsname) noexcept : vfsname_(vfsname.c_str())
+        {
+        }
+
+        vfsname_adapter(const std::filesystem::path& vfsname) = delete;
+
+        vfsname_adapter(std::nullptr_t) noexcept : vfsname_(nullptr)
+        {
+        }
+
+        operator const char*() const noexcept
+        {
+            return vfsname_;
+        }
+
+    private:
+        const char* vfsname_;
+    };
+
     connection_impl() = default;
 
     ~connection_impl() noexcept
@@ -24,59 +104,37 @@ public:
         do_close(ec);
     }
 
-    template<typename String,
-             std::enable_if_t<std::conjunction_v<std::is_convertible<String, std::string>, std::negation<std::is_same<String, std::nullptr_t>>>, bool> = true>
-    void construct(String filename, std::error_code& ec) noexcept
+    void impl_construct(filename_adapter filename, std::error_code& ec) noexcept
     {
-        do_construct(to_czstring(filename), SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr, ec);
+        do_construct(filename, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr, ec);
     }
 
-    template<typename String, typename Flags,
-             std::enable_if_t<std::conjunction_v<std::is_convertible<String, std::string>, std::negation<std::is_same<String, std::nullptr_t>>,
-                                                 std::disjunction<std::is_integral<Flags>, std::is_enum<Flags>>>,
-                              bool> = true>
-    void construct(String filename, Flags flags, std::error_code& ec) noexcept
+    void impl_construct(filename_adapter filename, flags_adapter flags, std::error_code& ec) noexcept
     {
-        do_construct(to_czstring(filename), static_cast<int>(flags), nullptr, ec);
+        do_construct(filename, flags, nullptr, ec);
     }
 
-    template<typename String, typename Flags, typename StringOrNull,
-             std::enable_if_t<std::conjunction_v<std::is_convertible<String, std::string>, std::negation<std::is_same<String, std::nullptr_t>>,
-                                                 std::disjunction<std::is_integral<Flags>, std::is_enum<Flags>>,
-                                                 std::disjunction<std::is_convertible<StringOrNull, std::string>, std::is_same<StringOrNull, std::nullptr_t>>>,
-                              bool> = true>
-    void construct(String filename, Flags flags, StringOrNull vfsname, std::error_code& ec) noexcept
+    void impl_construct(filename_adapter filename, flags_adapter flags, vfsname_adapter vfsname, std::error_code& ec) noexcept
     {
-        do_construct(to_czstring(filename), static_cast<int>(flags), to_czstring(vfsname), ec);
+        do_construct(filename, flags, vfsname, ec);
     }
 
-    template<typename String,
-             std::enable_if_t<std::conjunction_v<std::is_convertible<String, std::string>, std::negation<std::is_same<String, std::nullptr_t>>>, bool> = true>
-    bool open(String filename, std::error_code& ec) noexcept
+    bool impl_open(filename_adapter filename, std::error_code& ec) noexcept
     {
-        return do_open(to_czstring(filename), SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr, ec);
+        return do_open(filename, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr, ec);
     }
 
-    template<typename String, typename Flags,
-             std::enable_if_t<std::conjunction_v<std::is_convertible<String, std::string>, std::negation<std::is_same<String, std::nullptr_t>>,
-                                                 std::disjunction<std::is_integral<Flags>, std::is_enum<Flags>>>,
-                              bool> = true>
-    bool open(String filename, Flags flags, std::error_code& ec) noexcept
+    bool impl_open(filename_adapter filename, flags_adapter flags, std::error_code& ec) noexcept
     {
-        return do_open(to_czstring(filename), static_cast<int>(flags), nullptr, ec);
+        return do_open(filename, flags, nullptr, ec);
     }
 
-    template<typename String, typename Flags, typename StringOrNull,
-             std::enable_if_t<std::conjunction_v<std::is_convertible<String, std::string>, std::negation<std::is_same<String, std::nullptr_t>>,
-                                                 std::disjunction<std::is_integral<Flags>, std::is_enum<Flags>>,
-                                                 std::disjunction<std::is_convertible<StringOrNull, std::string>, std::is_same<StringOrNull, std::nullptr_t>>>,
-                              bool> = true>
-    bool open(String filename, Flags flags, StringOrNull vfsname, std::error_code& ec) noexcept
+    bool impl_open(filename_adapter filename, flags_adapter flags, vfsname_adapter vfsname, std::error_code& ec) noexcept
     {
-        return do_open(to_czstring(filename), static_cast<int>(flags), to_czstring(vfsname), ec);
+        return do_open(filename, flags, vfsname, ec);
     }
 
-    void close(std::error_code& ec) noexcept
+    void impl_close(std::error_code& ec) noexcept
     {
         do_close(ec);
     }

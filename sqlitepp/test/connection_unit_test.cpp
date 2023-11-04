@@ -444,10 +444,10 @@ TEST_F(ConnectionUnitTest, ExceptionOnConstruct)
 
         InSequence seq;
         EXPECT_CALL(*this, open_v2(_, _, _, _)).WillOnce(DoAll(SetArgPointee<1>(&db), Return(SQLITE_CANTOPEN)));
-        EXPECT_CALL(*this, errstr(_)).WillOnce(Return("Error"));
+        EXPECT_CALL(*this, errstr(_)).WillOnce(Return("Cannot open"));
         EXPECT_CALL(*this, close_v2(&db));
 
-        connection conn = connect(":memory:");
+        connection conn = connect("sample.db", SQLITE_OPEN_READONLY);
 
         FAIL() << "No exception was thrown";
     }
@@ -463,11 +463,11 @@ TEST_F(ConnectionUnitTest, ExceptionOnOpen)
 
         InSequence seq;
         EXPECT_CALL(*this, open_v2(_, _, _, _)).WillOnce(DoAll(SetArgPointee<1>(&db), Return(SQLITE_CANTOPEN)));
-        EXPECT_CALL(*this, errstr(_)).WillOnce(Return("Error"));
+        EXPECT_CALL(*this, errstr(_)).WillOnce(Return("Cannot open"));
         EXPECT_CALL(*this, close_v2(&db));
 
         connection conn;
-        bool opened = conn.open(":memory:");
+        bool opened = conn.open("sample.db", SQLITE_OPEN_READONLY);
 
         FAIL() << "No exception was thrown";
     }
@@ -484,10 +484,10 @@ TEST_F(ConnectionUnitTest, ExceptionOnClose)
         InSequence seq;
         EXPECT_CALL(*this, open_v2(_, _, _, _)).WillOnce(DoAll(SetArgPointee<1>(&db), Return(SQLITE_OK)));
         EXPECT_CALL(*this, close_v2(&db)).WillOnce(Return(SQLITE_BUSY));
-        EXPECT_CALL(*this, errstr(_)).WillOnce(Return("Error"));
+        EXPECT_CALL(*this, errstr(_)).WillOnce(Return("Busy"));
         EXPECT_CALL(*this, close_v2(&db));
 
-        connection conn = connect(":memory:");
+        connection conn = connect("sample.db", SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
         conn.close();
 
         FAIL() << "No exception was thrown";
@@ -507,7 +507,7 @@ TEST_F(ConnectionUnitTest, ExceptionOnMoveAssignment)
         EXPECT_CALL(*this, open_v2(_, _, _, _)).WillOnce(DoAll(SetArgPointee<1>(&db1), Return(SQLITE_OK)));
         EXPECT_CALL(*this, open_v2(_, _, _, _)).WillOnce(DoAll(SetArgPointee<1>(&db2), Return(SQLITE_OK)));
         EXPECT_CALL(*this, close_v2(&db1)).WillOnce(Return(SQLITE_BUSY));
-        EXPECT_CALL(*this, errstr(_)).WillOnce(Return("Error"));
+        EXPECT_CALL(*this, errstr(_)).WillOnce(Return("Busy"));
         EXPECT_CALL(*this, close_v2(&db2));
         EXPECT_CALL(*this, close_v2(&db1));
 
