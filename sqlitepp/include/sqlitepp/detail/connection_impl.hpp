@@ -30,7 +30,7 @@ public:
         {
         }
 
-        template<std::enable_if_t<std::is_same_v<std::filesystem::path::value_type, char>, bool> = true>
+        template<typename CharT = char, std::enable_if_t<std::is_same_v<std::filesystem::path::value_type, CharT>, bool> = true>
         filename_adapter(const std::filesystem::path& filename) noexcept : filename_(filename.c_str())
         {
         }
