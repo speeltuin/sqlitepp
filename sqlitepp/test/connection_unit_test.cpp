@@ -58,9 +58,10 @@ private:
     inline static ConnectionUnitTest* this_ = nullptr;
     sqlite3_api_routines stub_;
 
-    static const char* mock_errstr(int) noexcept
+    static const char* mock_errstr(int rc) noexcept
     {
-        return "Error";
+        assert(this_ != nullptr);
+        return this_->errstr(rc);
     }
 
     static int mock_open_v2(const char* filename, sqlite3** db, int flags, const char* vfs) noexcept
@@ -443,6 +444,7 @@ TEST_F(ConnectionUnitTest, ExceptionOnConstruct)
 
         InSequence seq;
         EXPECT_CALL(*this, open_v2(_, _, _, _)).WillOnce(DoAll(SetArgPointee<1>(&db), Return(SQLITE_CANTOPEN)));
+        EXPECT_CALL(*this, errstr(_)).WillOnce(Return("Error"));
         EXPECT_CALL(*this, close_v2(&db));
 
         connection conn = connect(":memory:");
@@ -461,6 +463,7 @@ TEST_F(ConnectionUnitTest, ExceptionOnOpen)
 
         InSequence seq;
         EXPECT_CALL(*this, open_v2(_, _, _, _)).WillOnce(DoAll(SetArgPointee<1>(&db), Return(SQLITE_CANTOPEN)));
+        EXPECT_CALL(*this, errstr(_)).WillOnce(Return("Error"));
         EXPECT_CALL(*this, close_v2(&db));
 
         connection conn;
@@ -481,6 +484,7 @@ TEST_F(ConnectionUnitTest, ExceptionOnClose)
         InSequence seq;
         EXPECT_CALL(*this, open_v2(_, _, _, _)).WillOnce(DoAll(SetArgPointee<1>(&db), Return(SQLITE_OK)));
         EXPECT_CALL(*this, close_v2(&db)).WillOnce(Return(SQLITE_BUSY));
+        EXPECT_CALL(*this, errstr(_)).WillOnce(Return("Error"));
         EXPECT_CALL(*this, close_v2(&db));
 
         connection conn = connect(":memory:");
@@ -503,6 +507,7 @@ TEST_F(ConnectionUnitTest, ExceptionOnMoveAssignment)
         EXPECT_CALL(*this, open_v2(_, _, _, _)).WillOnce(DoAll(SetArgPointee<1>(&db1), Return(SQLITE_OK)));
         EXPECT_CALL(*this, open_v2(_, _, _, _)).WillOnce(DoAll(SetArgPointee<1>(&db2), Return(SQLITE_OK)));
         EXPECT_CALL(*this, close_v2(&db1)).WillOnce(Return(SQLITE_BUSY));
+        EXPECT_CALL(*this, errstr(_)).WillOnce(Return("Error"));
         EXPECT_CALL(*this, close_v2(&db2));
         EXPECT_CALL(*this, close_v2(&db1));
 
