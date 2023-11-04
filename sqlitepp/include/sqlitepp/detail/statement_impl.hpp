@@ -11,6 +11,7 @@
 namespace sqlitepp::detail
 {
 
+template<typename Statement>
 class statement_impl
 {
 public:

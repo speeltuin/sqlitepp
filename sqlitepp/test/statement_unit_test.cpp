@@ -159,6 +159,7 @@ TEST_F(StatementUnitTest, PrepareSelectNoError)
     bool prepared = stmt.prepare("SELECT 1;", ec);
 
     EXPECT_FALSE(ec);
+    EXPECT_TRUE(prepared);
     EXPECT_EQ(stmt.stmt_handle(), &st);
 
     stmt.finalize(ec);
@@ -257,15 +258,10 @@ TEST_F(StatementUnitTest, MoveConstruct)
     statement stmt2 = std::move(stmt1);
 
     EXPECT_FALSE(ec);
-    EXPECT_EQ(stmt1.conn_handle(), &db);
+    EXPECT_EQ(stmt1.conn_handle(), nullptr);
     EXPECT_EQ(stmt1.stmt_handle(), nullptr);
     EXPECT_EQ(stmt2.conn_handle(), &db);
     EXPECT_EQ(stmt2.stmt_handle(), &st);
-
-    stmt2.finalize(ec);
-    EXPECT_FALSE(ec);
-    EXPECT_EQ(stmt2.conn_handle(), &db);
-    EXPECT_EQ(stmt2.stmt_handle(), nullptr);
 }
 
 TEST_F(StatementUnitTest, MoveAssignment)
@@ -297,18 +293,10 @@ TEST_F(StatementUnitTest, MoveAssignment)
     stmt2 = std::move(stmt1);
 
     EXPECT_FALSE(ec);
-    EXPECT_EQ(stmt1.conn_handle(), &db1);
+    EXPECT_EQ(stmt1.conn_handle(), &db2);
     EXPECT_EQ(stmt1.stmt_handle(), nullptr);
     EXPECT_EQ(stmt2.conn_handle(), &db1);
     EXPECT_EQ(stmt2.stmt_handle(), &st1);
-
-    stmt2.finalize(ec);
-
-    EXPECT_FALSE(ec);
-    EXPECT_EQ(stmt1.conn_handle(), &db1);
-    EXPECT_EQ(stmt1.stmt_handle(), nullptr);
-    EXPECT_EQ(stmt2.conn_handle(), &db1);
-    EXPECT_EQ(stmt2.stmt_handle(), nullptr);
 }
 
 TEST_F(StatementUnitTest, MoveAssignmentSelf)
@@ -332,4 +320,61 @@ TEST_F(StatementUnitTest, MoveAssignmentSelf)
     EXPECT_FALSE(ec);
     EXPECT_EQ(stmt.conn_handle(), &db);
     EXPECT_EQ(stmt.stmt_handle(), &st);
+}
+
+TEST_F(StatementUnitTest, PrepareAlreadyPreparedStatement)
+{
+    sqlite3 db{1};
+    sqlite3_stmt st{1};
+    std::error_code ec;
+
+    InSequence seq;
+    EXPECT_CALL(*this, prepare_v3(_, _, _, _, _, _)).WillOnce(DoAll(SetArgPointee<4>(&st), SetArgPointee<5>(nullptr), Return(SQLITE_OK)));
+    EXPECT_CALL(*this, finalize(&st));
+
+    statement stmt = prepare(&db, "SELECT 1;", ec);
+
+    EXPECT_FALSE(ec);
+    EXPECT_EQ(stmt.conn_handle(), &db);
+    EXPECT_EQ(stmt.stmt_handle(), &st);
+
+    bool prepared = stmt.prepare("SELECT 2;", ec);
+
+    EXPECT_FALSE(ec);
+    EXPECT_FALSE(prepared);
+    EXPECT_EQ(stmt.stmt_handle(), &st);
+}
+
+TEST_F(StatementUnitTest, ErrorOnConstruct)
+{
+    sqlite3 db = {1};
+    std::error_code ec;
+
+    InSequence seq;
+    EXPECT_CALL(*this, prepare_v3(_, _, _, _, _, _)).WillOnce(Return(SQLITE_SCHEMA));
+
+    statement stmt = prepare(&db, "SELECT 1;", ec);
+
+    EXPECT_TRUE(ec);
+    EXPECT_EQ(ec, sqlite3_errc::database_schema_changed);
+    EXPECT_EQ(stmt.conn_handle(), &db);
+    EXPECT_EQ(stmt.stmt_handle(), nullptr);
+}
+
+TEST_F(StatementUnitTest, ExceptionOnConstruct)
+{
+    try {
+        sqlite3 db = {1};
+
+        InSequence seq;
+        EXPECT_CALL(*this, prepare_v3(_, _, _, _, _, _)).WillOnce(Return(SQLITE_SCHEMA));
+        EXPECT_CALL(*this, errstr(_)).WillOnce(Return("Schema changed"));
+
+        statement stmt = prepare(&db, "SELECT 1;");
+
+        FAIL() << "No exception was thrown";
+    }
+    catch (const std::system_error& ec) {
+        EXPECT_EQ(ec.code(), sqlite3_errc::database_schema_changed);
+    }
 }
