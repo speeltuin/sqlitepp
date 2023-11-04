@@ -14,8 +14,11 @@
 namespace sqlitepp
 {
 
-class connection
+class connection : private detail::connection_impl<connection>
 {
+private:
+    using Impl = detail::connection_impl<connection>;
+
 public:
     enum class openmode : int
     {
@@ -32,14 +35,14 @@ public:
     template<typename... Args, std::enable_if_t<std::disjunction_v<std::is_same<Args, std::error_code&>...>, bool> = true>
     explicit connection(Args&&... args) noexcept
     {
-        impl_.construct(std::forward<Args>(args)...);
+        impl_construct(std::forward<Args>(args)...);
     }
 
     template<typename... Args, std::enable_if_t<std::negation_v<std::disjunction<std::is_same<Args, std::error_code&>...>>, bool> = true>
     explicit connection(Args&&... args)
     {
         std::error_code ec;
-        impl_.construct(std::forward<Args>(args)..., ec);
+        impl_construct(std::forward<Args>(args)..., ec);
         throw_on_error(ec);
     }
 
@@ -48,16 +51,16 @@ public:
 
     connection(connection&& other) noexcept
     {
-        std::swap(impl_, other.impl_);
+        std::swap<Impl>(*this, other);
     }
 
     connection& operator=(connection&& other)
     {
         if (this != &other) {
             std::error_code ec;
-            impl_.close(ec);
+            impl_close(ec);
             throw_on_error(ec);
-            std::swap(impl_, other.impl_);
+            std::swap<Impl>(*this, other);
         }
         return *this;
     }
@@ -65,43 +68,41 @@ public:
     template<typename... Args, std::enable_if_t<std::disjunction_v<std::is_same<Args, std::error_code&>...>, bool> = true>
     bool open(Args&&... args) noexcept
     {
-        return impl_.open(std::forward<Args>(args)...);
+        return impl_open(std::forward<Args>(args)...);
     }
 
     template<typename... Args, std::enable_if_t<std::negation_v<std::disjunction<std::is_same<Args, std::error_code&>...>>, bool> = true>
     bool open(Args&&... args)
     {
         std::error_code ec;
-        bool opened = impl_.open(std::forward<Args>(args)..., ec);
+        bool opened = impl_open(std::forward<Args>(args)..., ec);
         throw_on_error(ec);
         return opened;
     }
 
     void close(std::error_code& ec) noexcept
     {
-        impl_.close(ec);
+        impl_close(ec);
     }
 
     void close()
     {
         std::error_code ec;
-        impl_.close(ec);
+        impl_close(ec);
         throw_on_error(ec);
     }
 
     bool is_open() const noexcept
     {
-        return impl_.is_open();
+        return Impl::is_open();
     }
 
     conn_handle_t conn_handle() const noexcept
     {
-        return impl_.conn_handle();
+        return Impl::conn_handle();
     }
 
 private:
-    detail::connection_impl impl_;
-
     static void throw_on_error(const std::error_code& ec)
     {
         if (ec) {
