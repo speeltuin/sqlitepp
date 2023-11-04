@@ -10,6 +10,7 @@ namespace sqlitepp
 {
 
 using conn_handle_t = std::add_pointer_t<sqlite3>;
+using stmt_handle_t = std::add_pointer_t<sqlite3_stmt>;
 
 } // namespace sqlitepp
 
