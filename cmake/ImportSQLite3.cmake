@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 
-find_package(SQLite3 3.40.1)
+find_package(SQLite3 3.44.0)
 
 if (NOT SQLite3_FOUND)
     include(FetchContent)
@@ -8,7 +8,7 @@ if (NOT SQLite3_FOUND)
     FetchContent_Declare(
         sqlite-amalgamation
         GIT_REPOSITORY "https://github.com/algoritnl/sqlite-amalgamation-cmake-buildsystem.git"
-        GIT_TAG version-3.40.1
+        GIT_TAG main
         SOURCE_DIR ${PROJECT_SOURCE_DIR}/extern/sqlite-amalgamation-cmake-buildsystem
     )
 
