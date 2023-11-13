@@ -357,7 +357,7 @@ TEST_F(StatementUnitTest, ErrorOnConstruct)
 
     EXPECT_TRUE(ec);
     EXPECT_EQ(ec, sqlite3_errc::database_schema_changed);
-    EXPECT_EQ(stmt.conn_handle(), &db);
+    EXPECT_EQ(stmt.conn_handle(), nullptr);
     EXPECT_EQ(stmt.stmt_handle(), nullptr);
 }
 

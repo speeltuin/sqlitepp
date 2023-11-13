@@ -26,7 +26,7 @@ public:
 
     conn_handle_adapter(std::nullptr_t) = delete;
 
-    conn_handle_t conn_handle() const noexcept
+    operator conn_handle_t() const noexcept
     {
         return conn_handle_;
     }
