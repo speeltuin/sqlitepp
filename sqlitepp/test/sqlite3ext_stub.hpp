@@ -383,6 +383,10 @@ private:
 #if SQLITE_VERSION_NUMBER >= 3043000
     STUB_FUNC(stmt_explain, (sqlite3_stmt*, int), int)
 #endif
+#if SQLITE_VERSION_NUMBER >= 3044000
+    STUB_FUNC(get_clientdata, (sqlite3*, const char*), void*)
+    STUB_FUNC(set_clientdata, (sqlite3*, const char*, void*, void (*)(void*)), int)
+#endif
 
 #undef STUB_FUNC
 
@@ -708,6 +712,10 @@ private:
 #endif
 #if SQLITE_VERSION_NUMBER >= 3043000
         stub_stmt_explain,
+#endif
+#if SQLITE_VERSION_NUMBER >= 3044000
+        stub_get_clientdata,
+        stub_set_clientdata,
 #endif
     };
 };
